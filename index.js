@@ -68,7 +68,7 @@ const unifiedServer = (req, res) => {
     req.on('data', (data) => {
         buffer += decoder.write(data);
     })
-    req.on('end', () => {
+    req.on('end', async () => {
         buffer += decoder.end();
         
         // Choose the handler this request should go to.
@@ -86,21 +86,22 @@ const unifiedServer = (req, res) => {
         }
         
         // route the request to teh handeler specified in the router
-        chosenHandler(data, (statusCode, payload) => {
-            // Use the status code called back by the handeller, or default to 200
-            statusCode = typeof(statusCode) == 'number' ? statusCode : 200;
-            // Use the payload or default to empty object
-            payload = typeof(payload) == 'object' ? payload : {};
-            
-            // Convert the payload to a string
-            var payloadString = JSON.stringify(payload);
-            
-            // Return the response
-            res.setHeader('Content-Type', 'application/json');
-            res.writeHead(statusCode);
-            res.end(payloadString);
-            // Log the request payload
-            console.log(`Returning this response:`, statusCode, payloadString);
-        });
+        let { statusCode, payload }  = await chosenHandler(data);
+
+        // Use the status code called back by the handeller, or default to 200
+        statusCode = typeof(statusCode) == 'number' ? statusCode : 200;
+        // Use the payload or default to empty object
+        payload = typeof(payload) == 'object' ? payload : {};
+        
+        // Convert the payload to a string
+        var payloadString = JSON.stringify(payload);
+        
+        // Return the response
+        res.setHeader('Content-Type', 'application/json');
+        res.writeHead(statusCode);
+        res.end(payloadString);
+        // Log the request payload
+        console.log(`Returning this response:`, statusCode, payloadString);
+
     });
 }
